@@ -1,0 +1,26 @@
+# Secrets — never commit
+.env
+
+# Environments
+venv/
+.venv/
+
+# Data & derived artifacts (competition data is downloaded, not versioned)
+MAGFiLO_1.0_Kaggle_2026/
+data/
+checkpoints/
+runs/
+submissions/
+*.pth
+*.ckpt
+research/
+COMPETITION_BRIEF.md
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+
+# OS
+Thumbs.db
+Desktop.ini

@@ -1,0 +1,51 @@
+# Baseline: U-Net++ ConvNeXt-Tiny, consensus soft labels, native-res 512 crops.
+# Every default here traces to a measured number in research/panel/panel_sim.md.
+name: baseline
+
+model:
+  # must expose a full 5-level pyramid (strides 2/4/8/16/32) — ConvNeXt-style
+  # encoders get a zero-channel stride-2 skip from smp and silently lose fine detail
+  encoder: timm-efficientnet-b4
+  weights: imagenet
+  in_channels: 3
+
+data:
+  crop: 512
+  crops_per_image: 8
+  pos_frac: 0.7
+  batch_size: 12
+  num_workers: 4
+
+train:
+  seed: 0
+  epochs: 60
+  lr: 3.0e-4
+  encoder_lr_mult: 0.35
+  weight_decay: 1.0e-4
+  ema_decay: 0.999
+  amp: true
+  eval_every: 5
+  n_val_images: 40
+  max_hours: null      # set on Kaggle (e.g. 10.5) to stop before session timeout
+
+loss:
+  mask_bce: 0.4        # vs soft annotator-fraction target
+  mask_dice: 0.4       # vs hard consensus mask
+  mask_cldice: 0.2     # anti-fragmentation (splits cost ~10x merges)
+  cldice_iters: 8
+  boundary: 0.3
+  spine: 0.5
+  fraction: 0.3
+
+decode:
+  hi: 0.55             # hysteresis seed
+  lo: 0.40             # generous grow threshold (erosion 2x deadlier than dilation)
+  close: 0             # gentle closing kernel px, 0 = off (bridging v2 comes later)
+  min_area: 200
+  fill_holes: true
+  keep_mean_prob: 0.0  # confidence pruning placeholder; isotonic p*u rule later
+
+infer:
+  window: 1024
+  stride: 768
+  tta: false
