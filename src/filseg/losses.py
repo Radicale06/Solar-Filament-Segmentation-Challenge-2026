@@ -1,10 +1,10 @@
 """Losses.
 
-Mask head: soft-BCE against the annotator-fraction map (soft target — encodes
-annotator disagreement directly), soft Dice + clDice against the hard consensus
-mask. clDice (Shit et al., CVPR 2021) is the centerline-Dice for tubular
-structures — it penalizes fragmentation at training time, which the metric
-punishes ~10:1 relative to over-merging (research/panel/panel_sim.md, exp D).
+Mask head: soft-BCE against the annotator-fraction map (encodes annotator
+disagreement), soft Dice + clDice against the hard consensus mask. clDice
+(Shit et al., CVPR 2021) is the centerline-Dice for tubular structures and
+penalizes fragmentation, which the instance metric punishes far harder than
+over-merging.
 """
 from __future__ import annotations
 

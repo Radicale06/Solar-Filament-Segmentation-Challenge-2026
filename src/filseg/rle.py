@@ -41,12 +41,7 @@ def rle_str_to_mask(s: str, size=None) -> np.ndarray:
 
 
 def write_submission(preds: dict[str, list], out_path) -> int:
-    """Write a submission CSV.
-
-    Images with zero predicted instances get NO rows. Whether Kaggle's server
-    accepts a CSV that omits test images entirely is unverified (the organizer's
-    replica ignores absent stems) — confirm once with an early submission and
-    read the upload validation message before relying on empty images.
+    """Write a submission CSV. Images with zero predicted instances get no rows.
 
     Args:
         preds: {image_stem: [rle, ...]} where each rle is a compressed RLE dict

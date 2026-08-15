@@ -1,12 +1,10 @@
 """Multi-annotator consensus label builder.
 
-Implements the label policy selected by measurement (research/panel/panel_sim.md, exp B):
-instances are clustered ACROSS a file's annotator sets by pairwise IoU > 0.3 (greedy,
-largest-first), and each cluster's consensus mask is the pixelwise mean of its member
-masks thresholded at 0.5 ("mean-soft"; ties count as in — `coverage * 2 >= n_members`,
-matching the simulation exactly). Singleton clusters are KEPT (measured better than
-dropping them). The per-pixel annotator fraction (how many of the K sets cover the
-pixel) is stored as the soft/fraction supervision map.
+Instances are clustered across a file's annotator sets by pairwise IoU > 0.3
+(greedy, largest-first). Each cluster's consensus mask is the pixelwise mean of
+its member masks thresholded at 0.5 (ties in: `coverage * 2 >= n_members`).
+Singleton clusters are kept. The per-pixel annotator fraction (how many of the
+K sets cover the pixel) is stored as the soft supervision map.
 
 Outputs under paths.labels_dir():
     inst/<stem>.png    uint16 instance-id map (0 = background); larger instances are
@@ -36,12 +34,9 @@ H = W = 2048
 # ------------------------------------------------------------------ clustering
 
 def cluster_instances(rles: list, iou_thr: float = 0.3) -> list[list[int]]:
-    """Greedy cross-set clustering, identical to the validated simulation code.
-
-    Instances are visited largest-first; each joins the first existing cluster
-    containing a member with IoU > iou_thr, else starts a new cluster.
-    Returns clusters as lists of indices into `rles`.
-    """
+    """Greedy cross-set clustering: instances are visited largest-first; each
+    joins the first cluster containing a member with IoU > iou_thr, else starts
+    a new one. Returns clusters as lists of indices into `rles`."""
     n = len(rles)
     if n == 0:
         return []

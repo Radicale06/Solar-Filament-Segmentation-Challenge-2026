@@ -1,10 +1,8 @@
-# Baseline: U-Net++ ConvNeXt-Tiny, consensus soft labels, native-res 512 crops.
-# Every default here traces to a measured number in research/panel/panel_sim.md.
+# Baseline: U-Net++ EfficientNet-B4, consensus soft labels, native-res 512 crops.
 name: baseline
 
 model:
-  # must expose a full 5-level pyramid (strides 2/4/8/16/32) — ConvNeXt-style
-  # encoders get a zero-channel stride-2 skip from smp and silently lose fine detail
+  # encoder must expose a full 5-level pyramid (strides 2/4/8/16/32)
   encoder: timm-efficientnet-b4
   weights: imagenet
   in_channels: 3
@@ -31,19 +29,19 @@ train:
 loss:
   mask_bce: 0.4        # vs soft annotator-fraction target
   mask_dice: 0.4       # vs hard consensus mask
-  mask_cldice: 0.2     # anti-fragmentation (splits cost ~10x merges)
+  mask_cldice: 0.2     # anti-fragmentation
   cldice_iters: 8
   boundary: 0.3
   spine: 0.5
   fraction: 0.3
 
 decode:
-  hi: 0.55             # hysteresis seed
-  lo: 0.40             # generous grow threshold (erosion 2x deadlier than dilation)
-  close: 0             # gentle closing kernel px, 0 = off (bridging v2 comes later)
+  hi: 0.55             # hysteresis seed threshold
+  lo: 0.40             # hysteresis grow threshold
+  close: 0             # closing kernel px, 0 = off
   min_area: 200
   fill_holes: true
-  keep_mean_prob: 0.0  # confidence pruning placeholder; isotonic p*u rule later
+  keep_mean_prob: 0.0  # 0 = keep all instances
 
 infer:
   window: 1024

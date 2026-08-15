@@ -1,12 +1,12 @@
 """Probability maps -> filament instances.
 
-Chain (each step justified by measurement, research/panel/panel_sim.md):
-    hysteresis threshold (generous low threshold — erosion is 2x deadlier than
-    dilation, exp C) -> optional gentle closing (fragment bridging v1; splits
-    cost ~10x merges, exp D) -> connected components -> per-instance hole fill
-    (annotation spec forbids holes) -> min-area filter -> confidence pruning
-    (p*u rule placeholder: mean-probability threshold; isotonic calibration
-    replaces it later).
+Chain: hysteresis threshold -> optional gentle closing -> connected components
+-> per-instance hole fill (the annotation spec forbids holes) -> min-area
+filter -> mean-probability confidence pruning.
+
+Thresholds stay generous and nothing ever erodes: under-segmenting a thin
+filament below IoU 0.5 costs both an FP and an FN, and splitting one filament
+is far more expensive than merging two.
 """
 from __future__ import annotations
 
@@ -53,13 +53,13 @@ def decode_probs(probs: np.ndarray, cfg: dict) -> tuple[list[np.ndarray], list[d
     masks: list[np.ndarray] = []
     feats: list[dict] = []
     for i in range(1, n):
-        core = lab == i               # pre-fill pixels: where the model was confident
+        core = lab == i
         m = ndimage.binary_fill_holes(core) if fill else core
         area = int(m.sum())
         if area < min_area:
             continue
-        # confidence features on the pre-fill pixels only (filled hole pixels
-        # have near-zero probability and would dilute the pruning signal)
+        # confidence stats use pre-fill pixels: filled holes have ~zero
+        # probability and would dilute the pruning signal
         mean_p = float(pm[core].mean())
         if mean_p < keep_mean_prob:
             continue

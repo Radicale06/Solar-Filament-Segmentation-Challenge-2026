@@ -1,9 +1,8 @@
-"""Crop dataset: 512² native-resolution crops with positive-biased sampling.
+"""Crop dataset: native-resolution crops with positive-biased sampling.
 
-Native resolution is non-negotiable: the measured boundary budget is ±1 px
-(2 px systematic erosion halves PQ — research/panel/panel_sim.md, exp C), so no
-global downscaling anywhere in the pipeline. Elastic deformation is banned
-(destroys thin-filament topology); geometric augs are the d4 group only.
+No downscaling anywhere: the metric's strict IoU>0.5 matching leaves a ~±1 px
+boundary error budget on the thin filaments. No elastic deformation (it breaks
+thin-structure topology); geometric augs are the d4 group only.
 """
 from __future__ import annotations
 

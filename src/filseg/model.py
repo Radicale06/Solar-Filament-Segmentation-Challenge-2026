@@ -16,11 +16,9 @@ from .constants import HEADS
 
 
 class FilSegModel(nn.Module):
-    """NOTE: the encoder must expose a full 5-level pyramid (strides 2/4/8/16/32).
-    ConvNeXt-style encoders (no stride-2 stage) make smp inject a zero-channel
-    dummy skip at stride 2, silently removing all fine detail from the decoder —
-    fatal here given the measured ±1 px boundary budget. timm-efficientnet-* and
-    resnet-family encoders are known-good."""
+    """The encoder must expose a full 5-level pyramid (strides 2/4/8/16/32):
+    encoders without a stride-2 stage (ConvNeXt-style) get a zero-channel dummy
+    skip from smp and the decoder silently loses all fine detail."""
 
     def __init__(self, encoder: str = "timm-efficientnet-b4", weights: str | None = "imagenet",
                  in_channels: int = 3):

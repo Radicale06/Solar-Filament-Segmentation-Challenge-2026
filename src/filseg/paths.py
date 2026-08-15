@@ -6,7 +6,18 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-_KAGGLE_COMP = Path("/kaggle/input/filament-segmentation-2026/MAGFiLO_1.0_Kaggle_2026")
+
+def find_kaggle_input(name: str) -> Path | None:
+    """Locate a directory by name under /kaggle/input, whatever the mount layout
+    (Kaggle has used both /kaggle/input/<x> and /kaggle/input/{competitions,datasets}/.../<x>)."""
+    root = Path("/kaggle/input")
+    if not root.exists():
+        return None
+    for pattern in (name, f"*/{name}", f"*/*/{name}", f"*/*/*/{name}"):
+        for p in root.glob(pattern):
+            if p.is_dir():
+                return p
+    return None
 
 
 def data_root() -> Path:
@@ -17,8 +28,9 @@ def data_root() -> Path:
     local = REPO_ROOT / "MAGFiLO_1.0_Kaggle_2026"
     if local.exists():
         return local
-    if _KAGGLE_COMP.exists():
-        return _KAGGLE_COMP
+    kaggle = find_kaggle_input("MAGFiLO_1.0_Kaggle_2026")
+    if kaggle:
+        return kaggle
     raise FileNotFoundError(
         "Competition data not found. Set FILSEG_DATA or place MAGFiLO_1.0_Kaggle_2026/ in the repo root."
     )

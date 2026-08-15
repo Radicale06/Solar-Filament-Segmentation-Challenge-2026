@@ -61,3 +61,16 @@ def predict_full(model: torch.nn.Module, prep_u8: np.ndarray, device: torch.devi
             wacc[:, y0:y0 + window, x0:x0 + window] += wmap
 
     return (acc / wacc).numpy()
+
+
+@torch.no_grad()
+def predict_full_multi(models, prep_u8: np.ndarray, device: torch.device,
+                       **kwargs) -> np.ndarray:
+    """Ensemble: average of predict_full over one or more models."""
+    if not isinstance(models, (list, tuple)):
+        models = [models]
+    acc = None
+    for m in models:
+        p = predict_full(m, prep_u8, device, **kwargs)
+        acc = p if acc is None else acc + p
+    return acc / len(models)

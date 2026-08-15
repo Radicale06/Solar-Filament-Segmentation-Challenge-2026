@@ -12,17 +12,24 @@ from . import decode, infer, paths, pq, preprocessing
 
 
 def predict_stems(model, stems, cfg, device, tta: bool | None = None,
-                  log_every: int = 20) -> dict[str, list]:
-    """{stem: [pred rle, ...]} for a list of image stems."""
+                  log_every: int = 20, pruner=None) -> dict[str, list]:
+    """{stem: [pred rle, ...]} for a list of image stems.
+
+    `model` may be a single model or a list (probability-averaged ensemble).
+    `pruner` is an optional calibrate.Pruner applied to decoded instances.
+    """
     ic = cfg.get("infer", {})
     tta = ic.get("tta", False) if tta is None else tta
     preds: dict[str, list] = {}
     for i, stem in enumerate(stems):
         prep = preprocessing.load_prep(stem)
-        probs = infer.predict_full(model, prep, device,
-                                   window=ic.get("window", 1024),
-                                   stride=ic.get("stride", 768), tta=tta)
-        masks, _feats = decode.decode_probs(probs, cfg)
+        probs = infer.predict_full_multi(model, prep, device,
+                                         window=ic.get("window", 1024),
+                                         stride=ic.get("stride", 768), tta=tta)
+        masks, feats = decode.decode_probs(probs, cfg)
+        if pruner is not None and masks:
+            keep = pruner.keep(feats)
+            masks = [m for m, k in zip(masks, keep) if k]
         preds[stem] = [pq.mask_to_rle(m) for m in masks]
         if log_every and (i + 1) % log_every == 0:
             print(f"  predicted {i + 1}/{len(stems)}", flush=True)
@@ -71,8 +78,7 @@ def score_preds(preds: dict[str, list], gt_files=None) -> dict:
 def evaluate_model(model, stems, cfg, device, tta=None, max_images=None) -> dict:
     stems = list(stems)
     if max_images and max_images < len(stems):
-        # evenly strided over the time-sorted stem list so every year/site is
-        # represented (a head-slice would evaluate only 2011-2012 images)
+        # stems are time-sorted; stride evenly so every year/site is represented
         idx = np.linspace(0, len(stems) - 1, max_images).round().astype(int)
         stems = [stems[i] for i in sorted(set(idx.tolist()))]
     preds = predict_stems(model, stems, cfg, device, tta=tta)
